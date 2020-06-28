@@ -8,7 +8,7 @@ from .serializers import ReadRoomSerializer, WriteRoomSerializer
 class RoomsView(APIView):
 
     def get(self, request):
-        rooms = Room.objects.all()
+        rooms = Room.objects.all()[:5]
         serializer = ReadRoomSerializer(rooms, many=True).data
         return Response(serializer)
 
@@ -16,6 +16,7 @@ class RoomsView(APIView):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = WriteRoomSerializer(data=request.data)
+        print(serializer)
         if serializer.is_valid():
             room = serializer.save(user=request.user)
             room_serializer = ReadRoomSerializer(room).data
@@ -49,7 +50,8 @@ class RoomView(APIView):
                 return Response(status=status.HTTP_403_FORBIDDEN)
             serializer = WriteRoomSerializer(room, data=request.data, partial=True)
             if serializer.is_valid():
-                serializer.save()
+                room = serializer.save()
+                return Response(ReadRoomSerializer(room).data)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer)
